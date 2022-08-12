@@ -33,10 +33,14 @@ If you need help with this integration, please contact
 1. Log in to [Orca dashboard](https://app.orcasecurity.io) and navigate to
    [integrations](https://app.orcasecurity.io/integrations).
 2. Click the **Manage Keys** button to create a new Orca API token.
-3. Click "Generate A New Key" and make sure to supply it as the ENV variable
-   (CLIENT_SECRET=[token you've just generated]).
-4. Next, you also need to supply the account email as the ENV variable
-   (CLIENT_EMAIL=[the email you've used for authenticating]).
+3. Click "Create API Token".
+4. In order to ingest all data, provide the Administrator role. If a lesser role
+   is provided, the integration will attempt to run as many steps as it is able
+   to.
+5. Supply the created token as the ENV variable (CLIENT_SECRET="token you've
+   just generated").
+6. Next, supply the account email as the ENV variable (CLIENT_EMAIL=[the email
+   you've used for authenticating]).
 
 ### In JupiterOne
 
