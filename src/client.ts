@@ -67,10 +67,22 @@ async function streamArray<T>(
 export class APIClient {
   private static accessToken?: string;
 
+  // We have to handle API Keys and API Tokens differently.  This boolean is used
+  // to track which we're dealing with during a given execution.
+  private useTokenAuthorization: boolean = false;
+
   constructor(
     readonly config: IntegrationConfig,
     readonly logger: IntegrationLogger,
-  ) {}
+  ) {
+    const decodedSecret = Buffer.from(config.clientSecret, 'base64').toString(
+      'ascii',
+    );
+    if (decodedSecret.includes('https://')) {
+      console.log(`Found URL in decrypted secret.  Treating as token.`);
+      this.useTokenAuthorization = true;
+    }
+  }
 
   /**
    * Authenticates with Orca Security API and stores access & refresh tokens.
@@ -120,19 +132,31 @@ export class APIClient {
     method: 'GET' | 'POST' = 'GET',
     body?: any,
   ): Promise<Response> {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${APIClient.accessToken}`,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let response: Response;
+    if (this.useTokenAuthorization) {
+      response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${this.config.clientSecret}`,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } else {
+      response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${APIClient.accessToken}`,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-    if (response.status === 401 && retries < maxRetries) {
-      await this.authenticate();
+      if (response.status === 401 && retries < maxRetries) {
+        await this.authenticate();
 
-      return this.authenticateAndFetch(url, retries++, maxRetries);
+        return this.authenticateAndFetch(url, retries++, maxRetries);
+      }
     }
 
     return response;
@@ -142,24 +166,31 @@ export class APIClient {
    * Verifies authentication by making lightweight HEAD request to https://api.orcasecurity.io/api/auth/tokens.
    */
   public async verifyAuthentication(): Promise<void> {
-    if (!APIClient.accessToken) {
-      await this.authenticate();
-    }
+    let response: Response;
+    if (this.useTokenAuthorization) {
+      response = await fetch(`${this.config.clientBaseUrl}/api`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Token ${this.config.clientSecret}`,
+        },
+      });
+    } else {
+      if (!APIClient.accessToken) {
+        await this.authenticate();
+      }
 
-    const response = await fetch(
-      `${this.config.clientBaseUrl}/api/auth/tokens`,
-      {
+      response = await fetch(`${this.config.clientBaseUrl}/api/auth/tokens`, {
         method: 'HEAD',
         headers: {
           Authorization: `Bearer ${APIClient.accessToken}`,
         },
-      },
-    );
+      });
+    }
 
     if (!response.ok) {
       throw new IntegrationProviderAuthenticationError({
         cause: new Error('Provider authentication failed'),
-        endpoint: `${this.config.clientBaseUrl}/api/auth/tokens`,
+        endpoint: `${this.config.clientBaseUrl}/api`,
         status: response.status,
         statusText: response.statusText,
       });
@@ -181,7 +212,7 @@ export class APIClient {
   ): Promise<T> {
     const url = `${this.config.clientBaseUrl}/api${endpoint}`;
 
-    if (!APIClient.accessToken) {
+    if (!APIClient.accessToken && !this.useTokenAuthorization) {
       await this.authenticate();
     }
 
@@ -229,7 +260,8 @@ export class APIClient {
         if (
           authRetryCount < 4 &&
           response.status === 403 &&
-          errorResultBody?.status === 'failure'
+          errorResultBody?.status === 'failure' &&
+          !this.useTokenAuthorization
         ) {
           // This probably means that our token expired and we need to refresh
           // Example from Orca API:
