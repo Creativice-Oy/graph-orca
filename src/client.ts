@@ -159,7 +159,7 @@ export class APIClient {
     if (!response.ok) {
       throw new IntegrationProviderAuthenticationError({
         cause: new Error('Provider authentication failed'),
-        endpoint: `${this.config.clientBaseUrl}/api`,
+        endpoint: `${this.config.clientBaseUrl}/api/auth/tokens`,
         status: response.status,
         statusText: response.statusText,
       });
