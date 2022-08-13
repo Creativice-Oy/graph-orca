@@ -590,7 +590,7 @@ export class APIClientTokenAuth extends APIClient {
    * @param body the body of the query
    * @returns the body of the request using the provided generic type
    */
-  protected async request<T>(
+  async request<T>(
     endpoint: string,
     method: 'GET' | 'POST' = 'GET',
     body?: any,
