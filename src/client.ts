@@ -113,7 +113,7 @@ export class APIClient {
    * @param body the body of the query
    * @returns
    */
-  private async authenticateAndFetch(
+  protected async authenticateAndFetch(
     url: string,
     retries = 0,
     maxRetries = 1,
@@ -167,14 +167,14 @@ export class APIClient {
   }
 
   /**
-   * Makes a GET request to the provided relative endpoint at https://api.orcasecurity.io/api.
+   * Makes a GET or POST request to the provided relative endpoint provided by config.clientBaseUrl.
    *
    * @param endpoint the endpoint to query
    * @param method the method of the query
    * @param body the body of the query
    * @returns the body of the request using the provided generic type
    */
-  private async request<T>(
+  protected async request<T>(
     endpoint: string,
     method: 'GET' | 'POST' = 'GET',
     body?: any,
@@ -531,9 +531,130 @@ export class APIClient {
   }
 }
 
+export class APIClientTokenAuth extends APIClient {
+  /**
+   * Attempts to fetch the provided url. Automatically authenticates if 401 is received, and retries immediately after.
+   *
+   * @param url the endpoint to query
+   * @param retries the current retry count
+   * @param maxRetries the max retries
+   * @param method the method of the query
+   * @param body the body of the query
+   * @returns
+   */
+  async authenticateAndFetch(
+    url: string,
+    retries = 0,
+    maxRetries = 1,
+    method: 'GET' | 'POST' = 'GET',
+    body?: any,
+  ) {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${this.config.clientSecret}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    return response;
+  }
+
+  /**
+   * Verifies authentication by making lightweight GET request to https://api.orcasecurity.io/api.
+   */
+  async verifyAuthentication() {
+    const response = await fetch(`${this.config.clientBaseUrl}/api`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Token ${this.config.clientSecret}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new IntegrationProviderAuthenticationError({
+        cause: new Error('Provider authentication failed'),
+        endpoint: `${this.config.clientBaseUrl}/api`,
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+  }
+
+  /**
+   * Makes a GET or POST request to the provided relative endpoint provided by config.clientBaseUrl.
+   *
+   * @param endpoint the endpoint to query
+   * @param method the method of the query
+   * @param body the body of the query
+   * @returns the body of the request using the provided generic type
+   */
+  async request<T>(
+    endpoint: string,
+    method: 'GET' | 'POST' = 'GET',
+    body?: any,
+  ): Promise<T> {
+    const url = `${this.config.clientBaseUrl}/api${endpoint}`;
+
+    const makeAuthenticatedRequest = async () => {
+      const response = await this.authenticateAndFetch(url, 0, 1, method, body);
+
+      if (response.ok) {
+        return response.json();
+      } else {
+        let errorResultBody;
+
+        try {
+          // Orca includes additional information upon request failures.
+          // Example:
+          //
+          // { status: 'failure', error: 'invalid limit 1000000' }
+          errorResultBody = await response.json();
+        } catch (err) {
+          // Unable to parse the error result body, but still should log
+          // additional info below.
+        }
+
+        this.logger.warn(
+          {
+            result: errorResultBody,
+            endpoint: url,
+            status: response.status,
+            statusText: response.statusText,
+          },
+          'Error making request',
+        );
+
+        throw new IntegrationProviderAPIError({
+          endpoint: url,
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
+    };
+
+    return makeAuthenticatedRequest();
+  }
+}
+
+export function isTokenAuthUsed(config: IntegrationConfig): boolean {
+  const decodedSecret = Buffer.from(config.clientSecret, 'base64').toString(
+    'ascii',
+  );
+  if (decodedSecret.includes('https://')) {
+    console.log(`Found URL in decrypted secret.  Treating as token.`);
+    return true;
+  }
+  return false;
+}
+
 export function createAPIClient(
   config: IntegrationConfig,
   logger: IntegrationLogger,
 ): APIClient {
+  if (isTokenAuthUsed(config)) {
+    return new APIClientTokenAuth(config, logger);
+  }
   return new APIClient(config, logger);
 }
