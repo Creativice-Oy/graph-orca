@@ -37,10 +37,8 @@ If you need help with this integration, please contact
 4. In order to ingest all data, provide the Administrator role. If a lesser role
    is provided, the integration will attempt to run as many steps as it is able
    to.
-5. Supply the created token as the ENV variable (CLIENT_SECRET="token you've
-   just generated").
-6. Next, supply the account email as the ENV variable (CLIENT_EMAIL=[the email
-   you've used for authenticating]).
+5. Copy the token value which appears to a safe location. It will not be
+   available after closing this screen.
 
 ### In JupiterOne
 
@@ -55,8 +53,10 @@ If you need help with this integration, please contact
   the integration instance.
 - Select a **Polling Interval** that you feel is sufficient for your monitoring
   needs. You may leave this as `DISABLED` and manually execute the integration.
-- {{additional provider-specific settings}} Enter the **Orca Security API Key**
-  generated for use by JupiterOne.
+- Enter the **Orca Security Account Email** with the email address of the
+  account used to generate the above API token.
+- Enter the **Orca Security API Key/Token** generated for use by JupiterOne.
+- Enter the **Orca API Base URL** for your Orca account.
 
 4. Click **Create Configuration** once all values are provided.
 
