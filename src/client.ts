@@ -167,7 +167,7 @@ export class APIClient {
   }
 
   /**
-   * Makes a GET request to the provided relative endpoint at https://api.orcasecurity.io/api.
+   * Makes a GET or POST request to the provided relative endpoint provided by config.clientBaseUrl.
    *
    * @param endpoint the endpoint to query
    * @param method the method of the query
@@ -562,7 +562,7 @@ export class APIClientTokenAuth extends APIClient {
   }
 
   /**
-   * Verifies authentication by making lightweight HEAD request to https://api.orcasecurity.io/api/auth/tokens.
+   * Verifies authentication by making lightweight GET request to https://api.orcasecurity.io/api.
    */
   async verifyAuthentication() {
     const response = await fetch(`${this.config.clientBaseUrl}/api`, {
@@ -583,7 +583,7 @@ export class APIClientTokenAuth extends APIClient {
   }
 
   /**
-   * Makes a GET request to the provided relative endpoint at https://api.orcasecurity.io/api.
+   * Makes a GET or POST request to the provided relative endpoint provided by config.clientBaseUrl.
    *
    * @param endpoint the endpoint to query
    * @param method the method of the query
@@ -597,18 +597,7 @@ export class APIClientTokenAuth extends APIClient {
   ): Promise<T> {
     const url = `${this.config.clientBaseUrl}/api${endpoint}`;
 
-    const makeAuthenticatedRequest = async (authRetryCount: number) => {
-      if (authRetryCount > 0) {
-        this.logger.info(
-          {
-            authRetryCount,
-            endpoint,
-            method,
-          },
-          'Making authenticated request',
-        );
-      }
-
+    const makeAuthenticatedRequest = async () => {
       const response = await this.authenticateAndFetch(url, 0, 1, method, body);
 
       if (response.ok) {
@@ -633,7 +622,6 @@ export class APIClientTokenAuth extends APIClient {
             endpoint: url,
             status: response.status,
             statusText: response.statusText,
-            authRetryCount,
           },
           'Error making request',
         );
@@ -646,7 +634,7 @@ export class APIClientTokenAuth extends APIClient {
       }
     };
 
-    return makeAuthenticatedRequest(0);
+    return makeAuthenticatedRequest();
   }
 }
 
