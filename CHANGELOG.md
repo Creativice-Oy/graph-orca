@@ -8,6 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## 1.11.0 - 2022-08-15
+
+### Changed
+
+- Both API keys and API tokens are now supported for authentication.
+
 ## 1.10.0 - 2022-08-11
 
 ### Changed
