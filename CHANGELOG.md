@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- A max timeout for client bulk downloads can now be passed in as a
+  configuration parameter.
+
 ## 1.11.0 - 2022-08-15
 
 ### Changed
