@@ -642,12 +642,15 @@ export class APIClientTokenAuth extends APIClient {
   }
 }
 
-export function isTokenAuthUsed(config: IntegrationConfig): boolean {
+export function isTokenAuthUsed(
+  config: IntegrationConfig,
+  logger: IntegrationLogger,
+): boolean {
   const decodedSecret = Buffer.from(config.clientSecret, 'base64').toString(
     'ascii',
   );
   if (decodedSecret.includes('https://')) {
-    console.log(`Found URL in decrypted secret.  Treating as token.`);
+    logger.info(`Found URL in decrypted secret.  Treating as token.`);
     return true;
   }
   return false;
@@ -657,7 +660,7 @@ export function createAPIClient(
   config: IntegrationConfig,
   logger: IntegrationLogger,
 ): APIClient {
-  if (isTokenAuthUsed(config)) {
+  if (isTokenAuthUsed(config, logger)) {
     return new APIClientTokenAuth(config, logger);
   }
   return new APIClient(config, logger);
