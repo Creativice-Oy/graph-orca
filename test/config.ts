@@ -13,11 +13,14 @@ if (process.env.LOAD_ENV) {
 const DEFAULT_CLIENT_EMAIL = 'dummy-orca-client-email';
 const DEFAULT_CLIENT_SECRET = 'dummy-orca-client-secret';
 const DEFAULT_CLIENT_URL = 'https://app.eu.orcasecurity.io';
+const DEFAULT_MAX_TIMEOUT = 1800000; // 30 minutes
 
 export const integrationConfig: IntegrationConfig = {
   clientEmail: process.env.CLIENT_EMAIL || DEFAULT_CLIENT_EMAIL,
   clientSecret: process.env.CLIENT_SECRET || DEFAULT_CLIENT_SECRET,
   clientBaseUrl: process.env.CLIENT_BASE_URL || DEFAULT_CLIENT_URL,
+  clientMaxTimeout:
+    Number(process.env.CLIENT_MAX_TIMEOUT) || DEFAULT_MAX_TIMEOUT,
 };
 
 export function buildStepTestConfigForStep(stepId: string): StepTestConfig {

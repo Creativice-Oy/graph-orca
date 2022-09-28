@@ -31,6 +31,9 @@ export const instanceConfigFields: IntegrationInstanceConfigFieldMap = {
   clientBaseUrl: {
     type: 'string',
   },
+  clientMaxTimeout: {
+    type: 'string',
+  },
 };
 
 /**
@@ -52,6 +55,11 @@ export interface IntegrationConfig extends IntegrationInstanceConfig {
    * The client base url at the provider.
    */
   clientBaseUrl: string;
+
+  /**
+   * The client max timeout for bulk downloads in ms.
+   */
+  clientMaxTimeout: number;
 }
 
 export async function validateInvocation(

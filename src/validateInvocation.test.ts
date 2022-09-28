@@ -70,6 +70,7 @@ describe('#validateInvocation', () => {
             clientEmail: 'INVALID',
             clientSecret: integrationConfig.clientSecret,
             clientBaseUrl: integrationConfig.clientBaseUrl,
+            clientMaxTimeout: 1800000,
           },
         });
 
@@ -94,6 +95,7 @@ describe('#validateInvocation', () => {
             clientEmail: integrationConfig.clientEmail,
             clientSecret: 'INVALID',
             clientBaseUrl: integrationConfig.clientBaseUrl,
+            clientMaxTimeout: 1800000,
           },
         });
 
