@@ -66,11 +66,16 @@ async function streamArray<T>(
  */
 export class APIClient {
   private static accessToken?: string;
+  private maxSleepTimeMs: number;
 
   constructor(
     readonly config: IntegrationConfig,
     readonly logger: IntegrationLogger,
-  ) {}
+  ) {
+    this.maxSleepTimeMs = config.clientMaxTimeout
+      ? config.clientMaxTimeout
+      : 1800000; // 30 minutes default
+  }
 
   /**
    * Authenticates with Orca Security API and stores access & refresh tokens.
@@ -471,7 +476,6 @@ export class APIClient {
 
     let totalIterations = 0;
     const sleepTimeMs = 5000; // 5 seconds
-    const maxSleepTimeMs = 1800000; // 30 minutes
 
     do {
       await sleep(sleepTimeMs);
@@ -514,10 +518,10 @@ export class APIClient {
         });
       }
 
-      if (totalSleepTimeMs >= maxSleepTimeMs) {
+      if (totalSleepTimeMs >= this.maxSleepTimeMs) {
         throw new IntegrationError({
           code: 'RESOURCE_DOWNLOAD_TIMEOUT',
-          message: `Maximum time reached when attempting to export Orca resource (timeElapsed=${maxSleepTimeMs}ms)`,
+          message: `Maximum time reached when attempting to export Orca resource (timeElapsed=${this.maxSleepTimeMs}ms)`,
           fatal: false,
         });
       }
@@ -638,12 +642,15 @@ export class APIClientTokenAuth extends APIClient {
   }
 }
 
-export function isTokenAuthUsed(config: IntegrationConfig): boolean {
+export function isTokenAuthUsed(
+  config: IntegrationConfig,
+  logger: IntegrationLogger,
+): boolean {
   const decodedSecret = Buffer.from(config.clientSecret, 'base64').toString(
     'ascii',
   );
   if (decodedSecret.includes('https://')) {
-    console.log(`Found URL in decrypted secret.  Treating as token.`);
+    logger.info(`Found URL in decrypted secret.  Treating as token.`);
     return true;
   }
   return false;
@@ -653,7 +660,7 @@ export function createAPIClient(
   config: IntegrationConfig,
   logger: IntegrationLogger,
 ): APIClient {
-  if (isTokenAuthUsed(config)) {
+  if (isTokenAuthUsed(config, logger)) {
     return new APIClientTokenAuth(config, logger);
   }
   return new APIClient(config, logger);
