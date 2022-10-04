@@ -5,16 +5,19 @@ export function buildFindingKey(assetId: string, cveId: string) {
 }
 
 export function extractCVSS(cve: OrcaCVE | OrcaAlertCVE): {
-  score: number;
-  vector: string;
+  cvssScore: number;
+  cvssVector: string;
+  cvssSeverity: string;
 } {
   return cve.nvd.cvss3_score
     ? {
-        score: cve.nvd.cvss3_score,
-        vector: cve.nvd.cvss3_vector,
+        cvssScore: cve.nvd.cvss3_score,
+        cvssVector: cve.nvd.cvss3_vector?.toUpperCase(),
+        cvssSeverity: cve.nvd.cvss3_severity?.toLowerCase(),
       }
     : {
-        score: cve.nvd.cvss2_score,
-        vector: cve.nvd.cvss2_vector,
+        cvssScore: cve.nvd.cvss2_score,
+        cvssVector: cve.nvd.cvss2_vector?.toUpperCase(),
+        cvssSeverity: cve.nvd.cvss2_severity?.toLowerCase(),
       };
 }
