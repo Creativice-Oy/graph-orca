@@ -63,6 +63,12 @@ export interface OrcaCVE {
   type: string;
   score: number;
   context: string;
+  numericSeverity: number;
+  packages: Array<{
+    installed_version: string;
+    package_name: string;
+    patched_version: string;
+  }>;
   nvd: {
     cvss2_severity: string;
     cvss2_score: number;
@@ -88,6 +94,7 @@ export interface OrcaCVE {
   asset_vendor_id: string;
   vm_id: string;
   asset_labels: string[];
+  affected_packages: string[];
 }
 
 export interface OrcaAlertCVE {

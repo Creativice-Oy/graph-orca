@@ -83,7 +83,7 @@ export const Entities: Record<
   },
   FINDING: {
     resourceName: 'Finding',
-    _type: 'orca_finding',
+    _type: 'orca_finding', // CVES
     _class: ['Finding'],
     schema: {
       properties: {
@@ -109,7 +109,7 @@ export const Entities: Record<
   },
   ALERT: {
     resourceName: 'Alert',
-    _type: 'orca_finding_alert',
+    _type: 'orca_finding_alert', // orca alerts
     _class: ['Finding'],
     indexMetadata: {
       enabled: false,

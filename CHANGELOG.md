@@ -8,6 +8,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+## 1.12.0 - 2022-10-05
+
+### Changed
+
+The following properties on the `orca_finding` entity were changed or added.
+
+| Property           | Value                                                                 |
+| ------------------ | --------------------------------------------------------------------- |
+| `score`            | cvss3/2 score (previously orca score or if null, cvss3/2 score)       |
+| `severity`         | cvss3/2 severity or `unknown` (previously orca severity)              |
+| `cvss3Score`       | cvss3 score **\*new**                                                 |
+| `cvss2Score`       | cvss2 score **\*new**                                                 |
+| `orcaScore`        | Orca calculated score **\*new**                                       |
+| `orcaSeverity`     | Orca severity **\*new**                                               |
+| `numericSeverity`  | cvss3/2 score or `0` (previously orca score or if null, cvss3/2 score |
+| `affectedPackages` | List of affected packages **\*new**                                   |
+| `packages`         | List of packages associated with the finding **\*new**                |
+
 ## 1.11.1 - 2022-09-28
 
 ### Added

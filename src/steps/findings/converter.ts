@@ -13,7 +13,7 @@ import { OrcaCVE } from '../../types';
 import { buildFindingKey, extractCVSS } from '../utils';
 
 export function createFindingEntity(cve: OrcaCVE): Entity {
-  const { score, vector } = extractCVSS(cve);
+  const { cvssScore, cvssVector, cvssSeverity } = extractCVSS(cve);
   const fixAvailable = cve.fix_available_state.toLowerCase() === 'yes';
 
   return createIntegrationEntity({
@@ -23,13 +23,21 @@ export function createFindingEntity(cve: OrcaCVE): Entity {
         _type: Entities.FINDING._type,
         _class: Entities.FINDING._class,
         _key: buildFindingKey(cve.asset_unique_id, cve.cve_id),
-        name: cve.cve_id,
-        score: score ?? cve.score,
-        vector,
         category: cve.labels ? cve.labels[0] : 'unknown',
-        numericSeverity: score ?? cve.score,
+        name: cve.cve_id,
+        score: cvssScore,
+        severity: cvssSeverity ?? 'unknown',
+        vector: cvssVector,
+        cvss3Score: cve.nvd?.cvss3_score,
+        cvss2Score: cve.nvd?.cvss2_score,
+        orcaScore: cve.score,
+        orcaSeverity: cve.severity?.toLowerCase(),
+        numericSeverity: cvssScore ?? 0,
         open: !fixAvailable,
-        severity: cve.severity,
+        affectedPackages: cve.affected_packages,
+        packages: [
+          ...new Set((cve.packages ?? []).map((pkg) => pkg.package_name)),
+        ],
         references: cve.vendor_source_link
           ? [cve.vendor_source_link]
           : undefined,
@@ -76,7 +84,7 @@ export function createFindingCveRelationship(
   finding: Entity,
   cve: OrcaCVE,
 ): Relationship {
-  const { score, vector } = extractCVSS(cve);
+  const { cvssScore, cvssVector, cvssSeverity } = extractCVSS(cve);
   const cveIdDisplay = cve.cve_id.toUpperCase();
 
   return createMappedRelationship({
@@ -91,11 +99,11 @@ export function createFindingCveRelationship(
         _key: cve.cve_id.toLowerCase(),
         _type: 'cve',
         id: cve.cve_id,
-        score: score ?? cve.score,
-        vector,
+        score: cvssScore ?? 0,
+        vector: cvssVector,
         name: cveIdDisplay,
         displayName: cveIdDisplay,
-        severity: cve.severity,
+        severity: cvssSeverity,
         references: [`https://nvd.nist.gov/vuln/detail/${cve.cve_id}`],
         webLink: `https://nvd.nist.gov/vuln/detail/${cve.cve_id}`,
       },
