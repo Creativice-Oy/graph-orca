@@ -23,11 +23,15 @@ export async function fetchAssets({
   const accountEntity = (await jobState.getData(ACCOUNT_ENTITY_KEY)) as Entity;
 
   await apiClient.iterateAssets(async (asset) => {
-    const assetEntity = await jobState.addEntity(createAssetEntity(asset));
+    const assetEntity = createAssetEntity(asset);
 
-    await jobState.addRelationship(
-      createAccountAssetRelationship(accountEntity, assetEntity),
-    );
+    if (!(await jobState.hasKey(assetEntity._key))) {
+      await jobState.addEntity(assetEntity);
+
+      await jobState.addRelationship(
+        createAccountAssetRelationship(accountEntity, assetEntity),
+      );
+    }
   });
 }
 
